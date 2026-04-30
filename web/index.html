@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusPlay — Dashboard de Validation POC</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div>
+                    <h1>🎮 NexusPlay</h1>
+                    <p class="subtitle">Dashboard de Validation POC · Architecture Cloud-Native</p>
+                </div>
+                <div class="status-indicator">
+                    <div id="global-status" class="status-dot pending"></div>
+                    <span id="global-status-text">Initialisation...</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Section 1 : Status des services -->
+        <section class="card">
+            <h2>📊 État des microservices</h2>
+            <div class="grid">
+                <div class="service-card" id="lobby-card">
+                    <div class="service-header">
+                        <h3>Service Lobby</h3>
+                        <span class="port">:3000</span>
+                    </div>
+                    <div class="service-status">
+                        <div class="status-row">
+                            <span>Status</span>
+                            <span class="value" id="lobby-status">—</span>
+                        </div>
+                        <div class="status-row">
+                            <span>Redis</span>
+                            <span class="value" id="lobby-redis">—</span>
+                        </div>
+                        <div class="status-row">
+                            <span>PostgreSQL</span>
+                            <span class="value" id="lobby-postgres">—</span>
+                        </div>
+                        <div class="status-row">
+                            <span>Version</span>
+                            <span class="value" id="lobby-version">—</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="service-card" id="game-card">
+                    <div class="service-header">
+                        <h3>Service Game</h3>
+                        <span class="port">:3001</span>
+                    </div>
+                    <div class="service-status">
+                        <div class="status-row">
+                            <span>Status</span>
+                            <span class="value" id="game-status">—</span>
+                        </div>
+                        <div class="status-row">
+                            <span>Redis</span>
+                            <span class="value" id="game-redis">—</span>
+                        </div>
+                        <div class="status-row">
+                            <span>WebSockets</span>
+                            <span class="value" id="game-sockets">—</span>
+                        </div>
+                        <div class="status-row">
+                            <span>Version</span>
+                            <span class="value" id="game-version">—</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2 : Tests fonctionnels -->
+        <section class="card">
+            <h2>🧪 Tests fonctionnels en direct</h2>
+            <p class="card-subtitle">Cliquez pour exécuter chaque test. Ils valident les contraintes du brief.</p>
+            
+            <div class="test-grid">
+                <div class="test-item" data-test="create-lobby">
+                    <div class="test-info">
+                        <h4>Créer un lobby</h4>
+                        <p>POST /lobbies — Validation microservice + Redis</p>
+                    </div>
+                    <button onclick="testCreateLobby()" class="btn btn-primary">Lancer</button>
+                    <div class="test-result" id="result-create-lobby"></div>
+                </div>
+
+                <div class="test-item" data-test="list-lobbies">
+                    <div class="test-info">
+                        <h4>Lister les lobbies</h4>
+                        <p>GET /lobbies — Validation cache Redis (pipeline optimisé)</p>
+                    </div>
+                    <button onclick="testListLobbies()" class="btn btn-primary">Lancer</button>
+                    <div class="test-result" id="result-list-lobbies"></div>
+                </div>
+
+                <div class="test-item" data-test="join-lobby">
+                    <div class="test-info">
+                        <h4>Rejoindre un lobby</h4>
+                        <p>POST /lobbies/:id/join — Validation écriture Redis</p>
+                    </div>
+                    <button onclick="testJoinLobby()" class="btn btn-primary">Lancer</button>
+                    <div class="test-result" id="result-join-lobby"></div>
+                </div>
+
+                <div class="test-item" data-test="stats">
+                    <div class="test-info">
+                        <h4>Statistiques globales</h4>
+                        <p>GET /stats — Validation persistance PostgreSQL</p>
+                    </div>
+                    <button onclick="testStats()" class="btn btn-primary">Lancer</button>
+                    <div class="test-result" id="result-stats"></div>
+                </div>
+
+                <div class="test-item" data-test="websocket">
+                    <div class="test-info">
+                        <h4>WebSocket multijoueur</h4>
+                        <p>Socket.IO — Validation temps réel + scaling Game</p>
+                    </div>
+                    <button onclick="testWebSocket()" class="btn btn-primary">Lancer</button>
+                    <div class="test-result" id="result-websocket"></div>
+                </div>
+
+                <div class="test-item" data-test="all">
+                    <div class="test-info">
+                        <h4>🚀 Test complet</h4>
+                        <p>Lance tous les tests dans l'ordre</p>
+                    </div>
+                    <button onclick="runAllTests()" class="btn btn-success">Tout tester</button>
+                    <div class="test-result" id="result-all"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3 : Architecture validée -->
+        <section class="card">
+            <h2>✅ Contraintes du brief validées</h2>
+            <div class="constraints-grid">
+                <div class="constraint" id="c-microservices">
+                    <span class="check">✓</span>
+                    <div>
+                        <strong>Microservices (≥ 2)</strong>
+                        <small>Lobby + Game indépendants</small>
+                    </div>
+                </div>
+                <div class="constraint" id="c-loadbalancing">
+                    <span class="check">✓</span>
+                    <div>
+                        <strong>Load Balancing</strong>
+                        <small>ALB Multi-AZ (cible AWS)</small>
+                    </div>
+                </div>
+                <div class="constraint" id="c-scaling">
+                    <span class="check">✓</span>
+                    <div>
+                        <strong>Auto-scaling</strong>
+                        <small>ECS Application Auto Scaling</small>
+                    </div>
+                </div>
+                <div class="constraint" id="c-monitoring">
+                    <span class="check">✓</span>
+                    <div>
+                        <strong>Monitoring centralisé</strong>
+                        <small>Health checks + CloudWatch (cible)</small>
+                    </div>
+                </div>
+                <div class="constraint" id="c-cicd">
+                    <span class="check">✓</span>
+                    <div>
+                        <strong>Pipeline CI/CD</strong>
+                        <small>GitHub Actions automatisé</small>
+                    </div>
+                </div>
+                <div class="constraint" id="c-loadtest">
+                    <span class="check">✓</span>
+                    <div>
+                        <strong>Test de charge</strong>
+                        <small>wrk · 11 669 req/s sur /lobbies</small>
+                    </div>
+                </div>
+                <div class="constraint" id="c-cache">
+                    <span class="check">✓</span>
+                    <div>
+                        <strong>Cache</strong>
+                        <small>Redis pipeline optimisé</small>
+                    </div>
+                </div>
+                <div class="constraint" id="c-secrets">
+                    <span class="check">✓</span>
+                    <div>
+                        <strong>Gestion secrets</strong>
+                        <small>AWS Secrets Manager (cible)</small>
+                    </div>
+                </div>
+                <div class="constraint" id="c-notifications">
+                    <span class="check">✓</span>
+                    <div>
+                        <strong>Notifications</strong>
+                        <small>SNS → Slack + Email (cible)</small>
+                    </div>
+                </div>
+                <div class="constraint" id="c-dns">
+                    <span class="check">✓</span>
+                    <div>
+                        <strong>DNS Active/Backup</strong>
+                        <small>Route 53 failover (cible)</small>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4 : Logs de console -->
+        <section class="card">
+            <h2>📜 Console de logs</h2>
+            <div class="log-controls">
+                <button onclick="clearLogs()" class="btn btn-secondary">Effacer</button>
+                <button onclick="refreshHealth()" class="btn btn-secondary">Refresh health</button>
+            </div>
+            <pre id="console" class="console"></pre>
+        </section>
+
+        <footer>
+            <p>NexusPlay POC · Brounise · M2 · Architecture cloud-native AWS</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
