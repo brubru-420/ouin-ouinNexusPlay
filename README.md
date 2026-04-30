@@ -150,6 +150,9 @@ sleep 15
 make health
 ```
 
+<img width="2806" height="968" alt="image" src="https://github.com/user-attachments/assets/4cda09ee-afec-4a3b-9d5a-0f33dbcef637" />
+
+
 Tu devrais voir les **5 conteneurs healthy** :
 NAME                 STATUS
 nexusplay-redis      Up (healthy)
@@ -221,6 +224,12 @@ make health      # Vérifie la santé des services
 make load-test   # Lance le test de charge wrk
 make clean       # Nettoyage complet (volumes + images)
 ```
+<img width="1030" height="972" alt="image" src="https://github.com/user-attachments/assets/8662e065-7c88-40bb-80af-bd029c7f6431" />
+
+<img width="1102" height="1706" alt="image" src="https://github.com/user-attachments/assets/4c1f0f3d-167e-4bef-9f90-e2dd7b769646" />
+
+<img width="1066" height="1358" alt="image" src="https://github.com/user-attachments/assets/0a92452d-b91b-4d4d-b15f-ed43123be8e7" />
+
 
 ### Commandes manuelles utiles
 
