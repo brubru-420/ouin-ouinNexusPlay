@@ -24,8 +24,7 @@
 9. [Pipeline CI/CD](#-pipeline-cicd)
 10. [Test de charge et optimisations](#-test-de-charge-et-optimisations)
 11. [Mapping des contraintes du brief](#-mapping-des-contraintes-du-brief)
-12. [Coûts estimés AWS](#-coûts-estimés-aws)
-13. [Roadmap d'amélioration](#-roadmap-damélioration)
+12. [Roadmap d'amélioration](#-roadmap-damélioration)
 14. [Structure du projet](#-structure-du-projet)
 
 ---
@@ -435,33 +434,6 @@ Toutes les **10 contraintes** du brief sont validées :
 | 8 | Gestion sécurisée des secrets | AWS Secrets Manager + IAM | ✅ |
 | 9 | Notifications incidents | SNS → Slack + Email | ✅ |
 | 10 | DNS hautement disponible (Active/Backup) | Route 53 failover routing | ✅ |
-
----
-
-## 💰 Coûts estimés AWS
-
-Pour une charge de **~1000 utilisateurs simultanés** :
-
-| Composant | Estimation mensuelle |
-|-----------|---------------------|
-| ECS Fargate (4 tasks · 0.5 vCPU · 1Go) | ~80 € |
-| Application Load Balancer | ~20 € |
-| RDS PostgreSQL Multi-AZ (db.t3.medium) | ~110 € |
-| ElastiCache Redis (cache.t3.small) | ~30 € |
-| Route 53 (hosted zone + queries) | ~3 € |
-| CloudWatch (logs + metrics + dashboards) | ~5 € |
-| SNS + Secrets Manager + ECR | ~5 € |
-| Trafic réseau sortant (~100 Go/mois) | ~10 € |
-| **Total estimé** | **~263 €/mois** |
-
-### Optimisations possibles à grande échelle
-
-- **ECS Spot** : -70% sur le compute
-- **Aurora Serverless v2** : scale automatique du CPU DB
-- **Reserved Instances** sur RDS : -40% (engagement 1 an)
-- **CloudFront CDN** : cache des assets statiques
-
-À **100 000 utilisateurs simultanés**, le coût serait de l'ordre de **3000-5000 €/mois** — toujours linéaire avec la charge, jamais explosif.
 
 ---
 
