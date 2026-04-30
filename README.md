@@ -482,46 +482,46 @@ Toutes les **10 contraintes** du brief sont validées :
 ouin-ouinNexusPlay/
 ├── .github/
 │   └── workflows/
-│       ├── ci.yml                    # Pipeline CI (actif)
-│       └── deploy.yml.disabled       # Pipeline CD (préparé)
+│       ├── ci.yml                    
+│       └── deploy.yml.disabled       
 ├── db/
-│   └── init.sql                      # Schéma PostgreSQL + données démo
+│   └── init.sql                     
 ├── docs/
-│   ├── architecture.png              # Schéma d'architecture
-│   ├── dashboard.png                 # Capture dashboard
-│   └── cicd-pipeline.png             # Capture pipeline CI/CD
+│   ├── architecture.png             
+│   ├── dashboard.png                 
+│   └── cicd-pipeline.png            
 ├── load-tests/
-│   ├── post-lobby.lua                # Script wrk pour POST
-│   ├── run-load-test.sh              # Lance les 5 scénarios
-│   └── results-after-opti.txt        # Résultats du load test
+│   ├── post-lobby.lua               
+│   ├── run-load-test.sh             
+│   └── results-after-opti.txt       
 ├── services/
 │   ├── lobby/
 │   │   ├── src/
-│   │   │   ├── server.js             # API Express + endpoints
-│   │   │   ├── redis-client.js       # Client Redis avec retry
-│   │   │   └── pg-client.js          # Pool PostgreSQL optimisé
+│   │   │   ├── server.js             
+│   │   │   ├── redis-client.js      
+│   │   │   └── pg-client.js          
 │   │   ├── tests/
-│   │   │   └── server.test.js        # Tests unitaires
-│   │   ├── Dockerfile                # Multi-stage build
+│   │   │   └── server.test.js        
+│   │   ├── Dockerfile                
 │   │   ├── .dockerignore
 │   │   └── package.json
 │   └── game/
 │       ├── src/
-│       │   ├── server.js             # Express + Socket.IO
-│       │   └── game-logic.js         # Logique de jeu
+│       │   ├── server.js             
+│       │   └── game-logic.js         
 │       ├── tests/
-│       │   └── server.test.js        # Tests unitaires
-│       ├── Dockerfile                # Multi-stage build
+│       │   └── server.test.js        
+│       ├── Dockerfile                
 │       ├── .dockerignore
 │       └── package.json
 ├── web/
-│   ├── index.html                    # Dashboard de validation
-│   ├── style.css                     # Styles modernes
-│   └── app.js                        # Logique des tests
-├── docker-compose.yml                # Orchestration complète
-├── Makefile                          # Commandes simplifiées
-├── validate.sh                       # Validation auto (40+ checks)
-├── README.md                         # Ce fichier
+│   ├── index.html                    
+│   ├── style.css                     
+│   └── app.js                        
+├── docker-compose.yml                
+├── Makefile                         
+├── validate.sh                       
+├── README.md                         
 └── .gitignore
 
 ---
