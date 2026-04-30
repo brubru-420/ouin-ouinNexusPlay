@@ -59,6 +59,8 @@ L'architecture s'articule autour de **5 zones logiques** déployées sur AWS :
 5.Tous → CloudWatch (logs centralisés + métriques + alarmes)
 6.CloudWatch → SNS → Slack/Email (alerting incidents)
 
+<img width="2390" height="1580" alt="image" src="https://github.com/user-attachments/assets/f425cf6a-ce07-407b-b517-de4b25302bbb" />
+
 
 
 ### Sécurité Zero-Trust
