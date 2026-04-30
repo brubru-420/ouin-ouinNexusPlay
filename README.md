@@ -479,8 +479,8 @@ Toutes les **10 contraintes** du brief sont validées :
 
 ## 📁 Structure du projet
 
-ouin-ouinNexusPlay/
-├├── .github/
+
+├── .github/
 │   └── workflows/
 │       ├── ci.yml                    
 │       └── deploy.yml.disabled     
