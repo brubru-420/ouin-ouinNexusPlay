@@ -1,0 +1,21 @@
+{
+  "name": "nexusplay-game",
+  "version": "1.0.0",
+  "description": "NexusPlay Game Service — real-time gameplay engine",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test tests/*.test.js",
+    "lint": "echo 'Skip lint pour POC'"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5",
+    "ioredis": "^5.4.1",
+    "pino": "^9.4.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

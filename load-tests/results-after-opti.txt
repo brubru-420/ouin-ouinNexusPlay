@@ -1,0 +1,98 @@
+═══════════════════════════════════════════
+  Test de charge wrk - NexusPlay
+═══════════════════════════════════════════
+═══════════════════════════════════════════════════════
+   NEXUSPLAY - TEST DE CHARGE WRK
+   Date  : Thu Apr 30 11:41:06 CEST 2026
+   Config: 4 threads × 20 connexions × 30s
+═══════════════════════════════════════════════════════
+
+[0;34m[1/5] Health check Lobby[0m
+      Cible : http://localhost:3000/health
+Running 30s test @ http://localhost:3000/health
+  4 threads and 20 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency     2.79ms    2.36ms 102.06ms   97.73%
+    Req/Sec     1.88k   294.55     2.30k    78.42%
+  Latency Distribution
+     50%    2.44ms
+     75%    2.87ms
+     90%    3.46ms
+     99%    6.83ms
+  224953 requests in 30.02s, 78.09MB read
+Requests/sec:   7494.12
+Transfer/sec:      2.60MB
+
+[0;34m[2/5] List lobbies (lecture Redis)[0m
+      Cible : http://localhost:3000/lobbies
+Running 30s test @ http://localhost:3000/lobbies
+  4 threads and 20 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency     1.75ms  777.10us  24.98ms   94.00%
+    Req/Sec     2.93k   292.59     3.35k    78.58%
+  Latency Distribution
+     50%    1.57ms
+     75%    1.78ms
+     90%    2.25ms
+     99%    4.19ms
+  350286 requests in 30.02s, 86.52MB read
+Requests/sec:  11668.52
+Transfer/sec:      2.88MB
+
+[0;34m[3/5] Stats globales (lecture PostgreSQL)[0m
+      Cible : http://localhost:3000/stats
+Running 30s test @ http://localhost:3000/stats
+  4 threads and 20 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency     2.32ms    3.38ms 103.61ms   98.91%
+    Req/Sec     2.35k   309.32     2.94k    76.67%
+  Latency Distribution
+     50%    1.98ms
+     75%    2.48ms
+     90%    3.01ms
+     99%    5.89ms
+  281138 requests in 30.02s, 73.73MB read
+Requests/sec:   9364.88
+Transfer/sec:      2.46MB
+
+[0;34m[4/5] Create lobby (écriture Redis)[0m
+      Cible : http://localhost:3000/lobbies (POST)
+Running 30s test @ http://localhost:3000/lobbies
+  4 threads and 20 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency     2.70ms    1.62ms  50.77ms   96.36%
+    Req/Sec     1.94k   258.71     2.34k    77.17%
+  Latency Distribution
+     50%    2.39ms
+     75%    2.79ms
+     90%    3.34ms
+     99%    7.89ms
+  231585 requests in 30.03s, 74.87MB read
+Requests/sec:   7712.81
+Transfer/sec:      2.49MB
+
+[0;34m[5/5] Health check Game[0m
+      Cible : http://localhost:3001/health
+Running 30s test @ http://localhost:3001/health
+  4 threads and 20 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency     1.20ms  502.68us  23.21ms   91.38%
+    Req/Sec     4.26k   551.75     4.80k    88.42%
+  Latency Distribution
+     50%    1.06ms
+     75%    1.20ms
+     90%    1.63ms
+     99%    2.80ms
+  509176 requests in 30.02s, 174.33MB read
+Requests/sec:  16961.06
+Transfer/sec:      5.81MB
+
+═══════════════════════════════════════════════════════
+[0;32m   ✓ TEST DE CHARGE TERMINÉ[0m
+═══════════════════════════════════════════════════════
+
+Métriques clés à analyser :
+  • Requests/sec     : débit total
+  • Latency p50      : médiane (50% des req)
+  • Latency p99      : pire cas (1% des req)
+  • Non-2xx errors   : taux d'erreur

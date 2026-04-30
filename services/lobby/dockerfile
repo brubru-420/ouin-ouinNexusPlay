@@ -1,0 +1,36 @@
+# Multi-stage build pour image légère et sécurisée
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copie des manifests d'abord pour bénéficier du cache Docker
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+# Image finale
+FROM node:20-alpine
+
+# Sécurité : user non-root
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
+WORKDIR /app
+
+# Copie depuis le builder + sources
+COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
+COPY --chown=nodejs:nodejs src ./src
+COPY --chown=nodejs:nodejs package.json ./
+
+# Tini pour gérer les signaux Unix proprement
+RUN apk add --no-cache tini wget
+
+USER nodejs
+
+EXPOSE 3000
+
+# Health check pour ALB
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD wget --quiet --spider http://localhost:3000/live || exit 1
+
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["node", "src/server.js"]

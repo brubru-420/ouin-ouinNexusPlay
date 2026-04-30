@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build artifacts
+dist/
+build/
+coverage/
+
+# Gatling artifacts
+gatling-bin/
+gatling-js/node_modules/
+gatling-js/target/
+gatling-bundle.zip
+*.zip
+
+# Load test results (les sortiers wrk peuvent être commit si voulu)
+# load-tests/results-*.txt
+
+# Docker
+docker-compose.override.yml
+
+# Mac
+.DS_Store

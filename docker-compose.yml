@@ -1,0 +1,81 @@
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: nexusplay-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks: [nexusplay]
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: nexusplay-postgres
+    environment:
+      POSTGRES_USER: nexusplay
+      POSTGRES_PASSWORD: nexusplay
+      POSTGRES_DB: nexusplay
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexusplay"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks: [nexusplay]
+
+  lobby:
+    build:
+      context: ./services/lobby
+      dockerfile: Dockerfile
+    container_name: nexusplay-lobby
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: nexusplay
+      DB_PASSWORD: nexusplay
+      DB_NAME: nexusplay
+      LOG_LEVEL: info
+      APP_VERSION: ${APP_VERSION:-dev}
+    depends_on:
+      redis: { condition: service_healthy }
+      postgres: { condition: service_healthy }
+    networks: [nexusplay]
+    restart: unless-stopped
+
+  game:
+    build:
+      context: ./services/game
+      dockerfile: Dockerfile
+    container_name: nexusplay-game
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      LOG_LEVEL: info
+      APP_VERSION: ${APP_VERSION:-dev}
+    depends_on:
+      redis: { condition: service_healthy }
+    networks: [nexusplay]
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+
+networks:
+  nexusplay:
+    driver: bridge

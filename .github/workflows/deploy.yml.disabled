@@ -1,0 +1,220 @@
+name: CD - Build & Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY_LOBBY: nexusplay-lobby
+  ECR_REPOSITORY_GAME: nexusplay-game
+  ECS_CLUSTER: nexusplay-cluster
+  ECS_SERVICE_LOBBY: nexusplay-lobby-svc
+  ECS_SERVICE_GAME: nexusplay-game-svc
+
+jobs:
+  # =========================================
+  # 1. Tests rapides avant build (quality gate)
+  # =========================================
+  quick-tests:
+    name: Quick Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Test Lobby
+        working-directory: services/lobby
+        run: npm ci && npm test
+      
+      - name: Test Game
+        working-directory: services/game
+        run: npm ci && npm test
+
+  # =========================================
+  # 2. Build et push images Docker sur ECR
+  # =========================================
+  build-and-push:
+    name: Build & Push Images
+    runs-on: ubuntu-latest
+    needs: quick-tests
+    outputs:
+      image-tag: ${{ steps.meta.outputs.image-tag }}
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Generate image tag
+        id: meta
+        run: |
+          SHA_SHORT=$(echo ${{ github.sha }} | cut -c1-7)
+          TAG="${SHA_SHORT}-$(date +%Y%m%d%H%M)"
+          echo "image-tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "Image tag: ${TAG}"
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+      
+      - name: Build & push Lobby image
+        uses: docker/build-push-action@v5
+        with:
+          context: services/lobby
+          push: true
+          tags: |
+            ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY_LOBBY }}:${{ steps.meta.outputs.image-tag }}
+            ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY_LOBBY }}:latest
+          build-args: |
+            APP_VERSION=${{ steps.meta.outputs.image-tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Build & push Game image
+        uses: docker/build-push-action@v5
+        with:
+          context: services/game
+          push: true
+          tags: |
+            ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY_GAME }}:${{ steps.meta.outputs.image-tag }}
+            ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY_GAME }}:latest
+          build-args: |
+            APP_VERSION=${{ steps.meta.outputs.image-tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # =========================================
+  # 3. Test de charge Gatling sur staging
+  # =========================================
+  load-test:
+    name: Load Test (Gatling)
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Java for Gatling
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      
+      - name: Start staging stack
+        run: |
+          docker compose up -d
+          echo "Waiting for services to be ready..."
+          sleep 20
+      
+      - name: Verify services healthy
+        run: |
+          curl -f http://localhost:3000/health || exit 1
+          curl -f http://localhost:3001/health || exit 1
+      
+      - name: Download Gatling
+        run: |
+          wget -q https://repo1.maven.org/maven2/io/gatling/highcharts/gatling-charts-highcharts-bundle/3.11.5/gatling-charts-highcharts-bundle-3.11.5-bundle.zip
+          unzip -q gatling-charts-highcharts-bundle-3.11.5-bundle.zip
+          mv gatling-charts-highcharts-bundle-3.11.5 gatling
+      
+      - name: Copy simulation
+        run: cp gatling/simulations/NexusPlayLoadTest.scala gatling/user-files/simulations/
+      
+      - name: Run Gatling load test
+        working-directory: gatling
+        env:
+          TARGET_URL: http://localhost:3000
+        run: |
+          ./bin/gatling.sh -s NexusPlayLoadTest -nr || true
+      
+      - name: Upload Gatling report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gatling-report-${{ needs.build-and-push.outputs.image-tag }}
+          path: gatling/results/
+      
+      - name: Stop staging stack
+        if: always()
+        run: docker compose down
+
+  # =========================================
+  # 4. Déploiement ECS rolling update
+  # =========================================
+  deploy:
+    name: Deploy to ECS
+    runs-on: ubuntu-latest
+    needs: [build-and-push, load-test]
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+      
+      - name: Update Lobby task definition
+        id: task-def-lobby
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: infra/task-defs/lobby.json
+          container-name: lobby
+          image: ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY_LOBBY }}:${{ needs.build-and-push.outputs.image-tag }}
+      
+      - name: Deploy Lobby service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def-lobby.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE_LOBBY }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+      
+      - name: Update Game task definition
+        id: task-def-game
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: infra/task-defs/game.json
+          container-name: game
+          image: ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY_GAME }}:${{ needs.build-and-push.outputs.image-tag }}
+      
+      - name: Deploy Game service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def-game.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE_GAME }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+      
+      - name: Notify Slack on success
+        if: success()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"✅ Deploy NexusPlay réussi - tag ${{ needs.build-and-push.outputs.image-tag }}\"}" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
+        continue-on-error: true
+      
+      - name: Notify Slack on failure
+        if: failure()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"🚨 Deploy NexusPlay ÉCHEC - tag ${{ needs.build-and-push.outputs.image-tag }}\"}" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
+        continue-on-error: true

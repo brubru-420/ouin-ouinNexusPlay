@@ -1,0 +1,129 @@
+const express = require('express');
+const { createServer } = require('http');
+const { Server } = require('socket.io');
+const Redis = require('ioredis');
+const pino = require('pino');
+const { handleGameAction } = require('./game-logic');
+
+const SERVICE_NAME = 'game';
+const PORT = parseInt(process.env.PORT || '3001', 10);
+const VERSION = process.env.APP_VERSION || 'dev';
+
+const logger = pino({
+    name: SERVICE_NAME,
+    level: process.env.LOG_LEVEL || 'info',
+});
+
+const app = express();
+app.use(express.json());
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+    cors: { origin: '*', methods: ['GET', 'POST'] },
+    pingTimeout: 60000,
+    pingInterval: 25000,
+});
+
+const redis = new Redis({
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT || '6379', 10),
+    password: process.env.REDIS_PASSWORD || undefined,
+    retryStrategy: (times) => Math.min(times * 200, 2000),
+});
+
+redis.on('error', (err) => logger.error({ err: err.message }, 'Redis error'));
+
+app.get('/health', async (req, res) => {
+    let redisOk = false;
+    try {
+        redisOk = (await redis.ping()) === 'PONG';
+    } catch {}
+    res.status(redisOk ? 200 : 503).json({
+        status: redisOk ? 'ok' : 'degraded',
+        service: SERVICE_NAME,
+        version: VERSION,
+        sockets: io.sockets.sockets.size,
+        checks: { redis: redisOk },
+        timestamp: new Date().toISOString(),
+    });
+});
+
+app.get('/live', (req, res) => {
+    res.json({ status: 'alive', service: SERVICE_NAME });
+});
+
+app.get('/active-games', async (req, res) => {
+    try {
+        const count = await redis.scard('active:games');
+        res.json({ activeGames: count, sockets: io.sockets.sockets.size });
+    } catch (err) {
+        logger.error({ err: err.message }, 'Failed to list active games');
+        res.status(500).json({ error: 'internal_error' });
+    }
+});
+
+io.on('connection', (socket) => {
+    logger.info({ socketId: socket.id }, 'Player connected');
+
+    socket.on('join_game', async ({ gameId, playerId }) => {
+        if (!gameId || !playerId) {
+            socket.emit('error', { message: 'gameId and playerId required' });
+            return;
+        }
+        try {
+            socket.join(gameId);
+            await redis.sadd('active:games', gameId);
+            await redis.sadd(`game:${gameId}:players`, playerId);
+            io.to(gameId).emit('player_joined', { playerId, gameId });
+            logger.info({ gameId, playerId }, 'Player joined game');
+        } catch (err) {
+            logger.error({ err: err.message }, 'Failed to join game');
+            socket.emit('error', { message: 'internal_error' });
+        }
+    });
+
+    socket.on('action', async ({ gameId, action, playerId }) => {
+        try {
+            const result = handleGameAction(gameId, action, playerId);
+            io.to(gameId).emit('action_result', { playerId, action, result });
+        } catch (err) {
+            logger.error({ err: err.message }, 'Action processing failed');
+        }
+    });
+
+    socket.on('leave_game', async ({ gameId, playerId }) => {
+        socket.leave(gameId);
+        await redis.srem(`game:${gameId}:players`, playerId);
+        const remaining = await redis.scard(`game:${gameId}:players`);
+        if (remaining === 0) {
+            await redis.srem('active:games', gameId);
+        }
+        io.to(gameId).emit('player_left', { playerId });
+    });
+
+    socket.on('disconnect', () => {
+        logger.info({ socketId: socket.id }, 'Player disconnected');
+    });
+});
+
+httpServer.listen(PORT, () => {
+    logger.info({ port: PORT, version: VERSION }, `${SERVICE_NAME} service started`);
+});
+
+const shutdown = async (signal) => {
+    logger.info({ signal }, 'Shutting down gracefully (draining sockets)');
+    io.close(() => {
+        logger.info('Socket.IO closed');
+        httpServer.close(() => {
+            logger.info('HTTP server closed');
+            process.exit(0);
+        });
+    });
+    setTimeout(() => {
+        logger.error('Forced shutdown after timeout');
+        process.exit(1);
+    }, 30000);
+};
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+
+module.exports = app;
