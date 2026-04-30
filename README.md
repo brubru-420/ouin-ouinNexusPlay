@@ -528,7 +528,7 @@ ouin-ouinNexusPlay/
 
 ## 🔗 Liens importants
 
-- **Repository GitHub** : https://github.com/brubru-420/ouin-ouinNexusPlay
-- **CI/CD Pipeline** : https://github.com/brubru-420/ouin-ouinNexusPlay/actions
-- **Dashboard locale** : http://localhost:8080 (après `make start`)
+- Repository GitHub** : https://github.com/brubru-420/ouin-ouinNexusPlay
+- CI/CD Pipeline** : https://github.com/brubru-420/ouin-ouinNexusPlay/actions
+- Dashboard locale** : http://localhost:8080
 
