@@ -25,7 +25,6 @@
 10. [Test de charge et optimisations](#-test-de-charge-et-optimisations)
 11. [Mapping des contraintes du brief](#-mapping-des-contraintes-du-brief)
 12. [Roadmap d'amélioration](#-roadmap-damélioration)
-14. [Structure du projet](#-structure-du-projet)
 
 ---
 
@@ -474,55 +473,6 @@ Toutes les **10 contraintes** du brief sont validées :
 - [ ] **Preview deployments** automatiques sur chaque PR
 - [ ] **Runbooks** pour les incidents les plus courants
 - [ ] **GameDay** réguliers (simulations de panne)
-
----
-
-## 📁 Structure du projet
-
-
-├── .github/
-│   └── workflows/
-│       ├── ci.yml                    
-│       └── deploy.yml.disabled     
-├── db/
-│   └── init.sql                      
-├── docs/
-│   ├── architecture.png              
-│   ├── dashboard.png                 
-│   └── cicd-pipeline.png            
-├── load-tests/
-│   ├── post-lobby.lua              
-│   ├── run-load-test.sh              
-│   └── results-after-opti.txt        
-├── services/
-│   ├── lobby/
-│   │   ├── src/
-│   │   │   ├── server.js             
-│   │   │   ├── redis-client.js       
-│   │   │   └── pg-client.js         
-│   │   ├── tests/
-│   │   │   └── server.test.js        
-│   │   ├── Dockerfile                
-│   │   ├── .dockerignore
-│   │   └── package.json
-│   └── game/
-│       ├── src/
-│       │   ├── server.js            
-│       │   └── game-logic.js         
-│       ├── tests/
-│       │   └── server.test.js       
-│       ├── Dockerfile               
-│       ├── .dockerignore
-│       └── package.json
-├── web/
-│   ├── index.html                   
-│   ├── style.css                     
-│   └── app.js                       
-├── docker-compose.yml                
-├── Makefile                        
-├── validate.sh                      
-├── README.md                        
-└── .gitignore
 
 ---
 
