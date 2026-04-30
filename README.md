@@ -480,26 +480,26 @@ Toutes les **10 contraintes** du brief sont validées :
 ## 📁 Structure du projet
 
 ouin-ouinNexusPlay/
-├── .github/
+├├── .github/
 │   └── workflows/
 │       ├── ci.yml                    
-│       └── deploy.yml.disabled       
+│       └── deploy.yml.disabled     
 ├── db/
-│   └── init.sql                     
+│   └── init.sql                      
 ├── docs/
-│   ├── architecture.png             
+│   ├── architecture.png              
 │   ├── dashboard.png                 
 │   └── cicd-pipeline.png            
 ├── load-tests/
-│   ├── post-lobby.lua               
-│   ├── run-load-test.sh             
-│   └── results-after-opti.txt       
+│   ├── post-lobby.lua              
+│   ├── run-load-test.sh              
+│   └── results-after-opti.txt        
 ├── services/
 │   ├── lobby/
 │   │   ├── src/
 │   │   │   ├── server.js             
-│   │   │   ├── redis-client.js      
-│   │   │   └── pg-client.js          
+│   │   │   ├── redis-client.js       
+│   │   │   └── pg-client.js         
 │   │   ├── tests/
 │   │   │   └── server.test.js        
 │   │   ├── Dockerfile                
@@ -507,21 +507,21 @@ ouin-ouinNexusPlay/
 │   │   └── package.json
 │   └── game/
 │       ├── src/
-│       │   ├── server.js             
+│       │   ├── server.js            
 │       │   └── game-logic.js         
 │       ├── tests/
-│       │   └── server.test.js        
-│       ├── Dockerfile                
+│       │   └── server.test.js       
+│       ├── Dockerfile               
 │       ├── .dockerignore
 │       └── package.json
 ├── web/
-│   ├── index.html                    
+│   ├── index.html                   
 │   ├── style.css                     
-│   └── app.js                        
+│   └── app.js                       
 ├── docker-compose.yml                
-├── Makefile                         
-├── validate.sh                       
-├── README.md                         
+├── Makefile                        
+├── validate.sh                      
+├── README.md                        
 └── .gitignore
 
 ---
